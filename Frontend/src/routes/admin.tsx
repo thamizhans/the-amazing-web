@@ -29,19 +29,26 @@ function AdminPage() {
     e.preventDefault();
     setBusy(true);
     setError(false);
-    const { ok } = await unlock({ data: { password } });
-    setBusy(false);
-    if (!ok) {
+    try {
+      const { ok } = await unlock({ data: { password } });
+      setBusy(false);
+      if (!ok) {
+        setError(true);
+        return;
+      }
+      localStorage.setItem("spider-admin-key", password);
+      setPassword("");
+      await router.invalidate();
+    } catch (err) {
+      setBusy(false);
       setError(true);
-      return;
     }
-    setPassword("");
-    await router.invalidate();
   };
 
   const signOut = async () => {
     setBusy(true);
     await lock();
+    localStorage.removeItem("spider-admin-key");
     setBusy(false);
     await router.invalidate();
   };
