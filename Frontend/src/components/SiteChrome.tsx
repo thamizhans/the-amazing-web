@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
+import { Volume2, VolumeX } from "lucide-react";
 
 const nav = [
   { to: "/", label: "Home" },
@@ -12,6 +13,52 @@ const nav = [
   { to: "/live-action", label: "Live-Action" },
   { to: "/help", label: "Help" },
 ] as const;
+
+function AudioToggle() {
+  const [isPlaying, setIsPlaying] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    // Create audio element once
+    const audio = new Audio("/theme.mp3");
+    audio.loop = true;
+    audio.volume = 0.5;
+    audioRef.current = audio;
+
+    return () => {
+      audio.pause();
+      audio.src = "";
+    };
+  }, []);
+
+  const togglePlay = () => {
+    if (!audioRef.current) return;
+    
+    if (isPlaying) {
+      audioRef.current.pause();
+      setIsPlaying(false);
+    } else {
+      // Browser autoplay policies require user interaction,
+      // which is satisfied since this is triggered by an onClick.
+      audioRef.current.play().then(() => {
+        setIsPlaying(true);
+      }).catch(err => {
+        console.error("Audio playback failed:", err);
+      });
+    }
+  };
+
+  return (
+    <button
+      onClick={togglePlay}
+      className="flex items-center justify-center rounded-full p-2 text-muted-foreground transition-colors hover:bg-primary/10 hover:text-foreground"
+      aria-label={isPlaying ? "Mute music" : "Play music"}
+      title={isPlaying ? "Mute music" : "Play music"}
+    >
+      {isPlaying ? <Volume2 size={18} /> : <VolumeX size={18} />}
+    </button>
+  );
+}
 
 export function SiteHeader() {
   const [open, setOpen] = useState(false);
@@ -41,14 +88,17 @@ export function SiteHeader() {
           ))}
         </nav>
 
-        <button
-          type="button"
-          onClick={() => setOpen((o) => !o)}
-          aria-expanded={open}
-          className="rounded-md border border-border px-3 py-1.5 font-mono text-[0.68rem] uppercase tracking-[0.15em] text-muted-foreground lg:hidden"
-        >
-          {open ? "Close" : "Menu"}
-        </button>
+        <div className="flex items-center gap-2">
+          <AudioToggle />
+          <button
+            type="button"
+            onClick={() => setOpen((o) => !o)}
+            aria-expanded={open}
+            className="rounded-md border border-border px-3 py-1.5 font-mono text-[0.68rem] uppercase tracking-[0.15em] text-muted-foreground lg:hidden"
+          >
+            {open ? "Close" : "Menu"}
+          </button>
+        </div>
       </div>
 
       {open && (
@@ -88,6 +138,10 @@ export function SiteFooter() {
         </div>
         <p className="max-w-2xl text-sm text-muted-foreground">
           The Amazing Web is an interactive Spider-Verse knowledge platform.<br />
+          <span className="mt-2 block font-mono text-[0.7rem] uppercase tracking-widest text-primary/90">
+            Dedicated to Andrew Garfield — The one who made us believe in the Amazing.<br />Loved across every universe, now and always.
+          </span>
+          <br />
           &copy; {new Date().getFullYear()} Inbathamizhan S. All rights reserved.
         </p>
         <div className="flex gap-4 font-mono text-[0.65rem] uppercase tracking-[0.2em] text-muted-foreground">
